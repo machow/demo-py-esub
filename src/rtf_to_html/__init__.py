@@ -71,7 +71,10 @@ class RTFHtml:
         self.title = _stem(source) if _is_path(source) else None
 
     def _repr_html_(self) -> str:
-        return render(self.document, fragment=True, title=self.title)
+        # Positron routes full-page HTML to the Viewer pane and renders
+        # fragments inline, so emit a complete document there. Quarto sets
+        # QUARTO_BIN_PATH even when launched from Positron and needs a fragment.
+        return render(self.document, fragment=not _in_positron_console(), title=self.title)
 
     def html(self, fragment: bool = False) -> str:
         return render(self.document, fragment=fragment, title=self.title)
@@ -91,6 +94,11 @@ def display(source: Source) -> RTFHtml:
         rtf_to_html.display(doc)   # doc = rtflite.RTFDocument(...)
     """
     return RTFHtml(source)
+
+
+def _in_positron_console() -> bool:
+    env = os.environ
+    return "POSITRON_VERSION" in env and "QUARTO_BIN_PATH" not in env
 
 
 def _stem(source: Source) -> str:
